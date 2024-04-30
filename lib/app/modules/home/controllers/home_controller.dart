@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:mi_shop/app/util/Log.dart';
 import 'package:mi_shop/app/util/http_client.dart';
@@ -9,15 +10,29 @@ import '../../../model/best_model.dart';
 
 class HomeController extends GetxController {
   late HttpsClient httpClient;
+  late ScrollController scrollController;
 
   var flag = false.obs;
   var bannerList = <BannerModelResult>[].obs;
   var bestList = <BestModelResult>[].obs;
+  var alpha = 0.0.obs;
 
   @override
   void onInit() {
     super.onInit();
     httpClient = HttpsClient();
+    scrollController = ScrollController();
+    scrollController.addListener(() {
+      if (scrollController.offset <= 100) {
+        alpha.value = scrollController.offset / 100; //设置alpha
+        flag.value = false;
+        update();
+      } else {
+        flag.value = true;
+        update();
+      }
+
+    });
   }
 
   @override

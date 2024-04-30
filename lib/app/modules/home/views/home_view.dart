@@ -16,42 +16,57 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return HomeContent(controller: controller);
   }
+
 }
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends StatefulWidget {
   final HomeController controller;
 
   const HomeContent({super.key, required this.controller});
 
   @override
+  State<HomeContent> createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<HomeContent> with AutomaticKeepAliveClientMixin{
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Obx(() => Scaffold(
         appBar: _appBar(),
+        // extendBody: true,
         extendBodyBehindAppBar: true,
-        body: Column(
-          children: [
-            HomeBanner(controller: controller),
-          ],
+        body: MediaQuery.removePadding(
+          //ListView没有和AppBar一起使用时，Flutter默认会为ListView增加TopPadding,这里将其去掉
+          removeTop: true,
+          context: context,
+          child: ListView(
+            controller: widget.controller.scrollController,
+            padding: EdgeInsets.zero,
+            children: [
+              HomeBanner(controller: widget.controller),
+              HomeBestList(controller: widget.controller),
+            ],
+          ),
         )));
   }
 
   AppBar _appBar() {
     return AppBar(
-      leading: controller.flag.value
+      leading: widget.controller.flag.value
           ? const Text('')
           : const Icon(
               MyFonts.xiaomi,
               color: Colors.red,
             ),
-      leadingWidth: controller.flag.value
+      leadingWidth: widget.controller.flag.value
           ? ScreenAdapter.width(40)
           : ScreenAdapter.width(140),
       title: GestureDetector(
         onTap: () {
-          controller.flag.value = !controller.flag.value;
         },
         child: AnimatedContainer(
-            width: controller.flag.value
+            width: widget.controller.flag.value
                 ? ScreenAdapter.width(800)
                 : ScreenAdapter.width(620),
             height: ScreenAdapter.height(96),
@@ -76,23 +91,25 @@ class HomeContent extends StatelessWidget {
             )),
       ),
       centerTitle: true,
-      backgroundColor:
-          controller.flag.value ? Colors.white : Colors.transparent,
+      backgroundColor:Colors.white.withOpacity(widget.controller.alpha.value),
       elevation: 0,
       actions: [
         IconButton(
             onPressed: () {},
             icon: Icon(
               Icons.qr_code,
-              color: controller.flag.value ? Colors.black87 : Colors.white,
+              color: widget.controller.flag.value ? Colors.black87 : Colors.white,
             )),
         IconButton(
             onPressed: () {},
             icon: Icon(Icons.message,
-                color: controller.flag.value ? Colors.black87 : Colors.white))
+                color: widget.controller.flag.value ? Colors.black87 : Colors.white))
       ],
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class HomeBanner extends StatelessWidget {
@@ -137,8 +154,38 @@ class HomeBestList extends StatelessWidget {
           crossAxisSpacing: 20.h,
           itemCount: controller.bestList.length,
           shrinkWrap: true,
-          itemBuilder: (context, index) {
+          physics: const NeverScrollableScrollPhysics(),
+          //禁止滑动
 
+          itemBuilder: (context, index) {
+            var picUrl = HttpsClient.replaeUri(controller.bestList[index].sPic);
+            return GestureDetector(
+              onTap: () {
+                //
+                Get.snackbar(controller.bestList[index].title ?? '',
+                    controller.bestList[index].price.toString());
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 200.w,
+                      height: 200.h,
+                      child: Image.network(
+                        picUrl,
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                    Text(controller.bestList[index].title ?? ''),
+                    Text(controller.bestList[index].price.toString()),
+                  ],
+                ),
+              ),
+            );
           }),
     );
   }
